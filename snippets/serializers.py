@@ -23,21 +23,26 @@ class SnippetSerializer(serializers.HyperlinkedModelSerializer):
 #         model = User
 #         fields = ('url', 'id', 'username', 'snippets',)
 
-class UserSerializer(serializers.Serializer):
-    username = serializers.CharField()
-    snippets = serializers.HyperlinkedRelatedField(
-        many=True, view_name='snippet-detail',
-        queryset=Snippet.objects.all())
+class UserSerializer(serializers.ModelSerializer):
+    # username = serializers.CharField()
+    snippets = SnippetSerializer(many=True)
+    # snippets = serializers.HyperlinkedRelatedField(
+    #     many=True, view_name='snippet-detail',
+    #     queryset=Snippet.objects.all())
     # snippets = serializers.CharField()
     # snippet_code = serializers.CharField()
+    class Meta:
+        model = User
+        fields = ('username', 'snippets')
 
     def create(self, validated_data):
         """
         Create and return a new `User` instance, given the validated data.
         """ 
-        print(validated_data)
+        # print(validated_data)
+        snippet_data = validated_data.pop('snippets')
         user = User.objects.create_user(validated_data['username'])
-        snippet = Snippet.objects.create(code=validated_data['snippets'], owner=user)
-        snippet.save()
+        for snippet in snippet_data:
+            Snippet.objects.create(owner=user, *snippet)
         return user
     
